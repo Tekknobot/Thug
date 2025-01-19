@@ -4,29 +4,40 @@ using System.Collections.Generic;
 
 public class SequencerController : MonoBehaviour
 {
-    public AudioSource audioSourcePrefab;  // Prefab for playing notes
-    public AudioClip[] noteClips;          // Array of audio clips for each pitch
-    public float bpm = 120f;               // Beats per minute for playback
+    public AudioSource audioSourcePrefab;
+    public AudioClip[] noteClips;
+    public float bpm = 120f; // Default BPM
 
-    private ScrollableGrid grid;           // Dynamically assigned ScrollableGrid
-    private bool isPlaying = false;        // Is the sequencer currently playing?
-    private int currentStep = 0;           // Current step in the sequence
-    private List<AudioSource> audioSources = new List<AudioSource>(); // Pool of AudioSources for playback
-    private float stepDuration;            // Duration of each step in seconds
-    public Color activeColumnColor = new Color(1f, 0.8f, 0.4f, 0.5f); // Tint for active column
+    [HideInInspector]
+    public bool isPlaying = false;
+    [HideInInspector]
+    public bool isInitialized = false; // Tracks whether initialization is complete
+    private ScrollableGrid grid;
+    private int currentStep = 0;
+    private List<AudioSource> audioSources = new List<AudioSource>();
+    private float stepDuration;
+    public Color activeColumnColor = new Color(1f, 0.8f, 0.4f, 0.5f);
+
+    public UnityEngine.UI.Slider bpmSlider; // Reference to the BPM slider
 
     private void Start()
     {
-        // Start a coroutine to wait for the ScrollableGrid to be available
         StartCoroutine(WaitForGridInitialization());
 
-        // Calculate step duration based on BPM
-        stepDuration = 60f / bpm;
+        // Initialize the BPM from the slider's value (if assigned)
+        if (bpmSlider != null)
+        {
+            bpm = bpmSlider.value;
+            bpmSlider.onValueChanged.AddListener(UpdateBpm); // Listen for slider changes
+        }
+
+        // Calculate step duration based on the initial BPM
+        UpdateStepDuration();
     }
 
     private IEnumerator WaitForGridInitialization()
     {
-        // Wait until the ScrollableGrid with the tag "SequencerGrid" is found
+        // Wait until the ScrollableGrid is found
         while (grid == null)
         {
             GameObject gridObject = GameObject.FindGameObjectWithTag("SequencerGrid");
@@ -37,8 +48,9 @@ public class SequencerController : MonoBehaviour
             yield return null; // Wait for the next frame
         }
 
-        // Initialize the audio source pool after the grid is found
         InitializeAudioSources();
+        isInitialized = true; // Set the initialized flag
+        Debug.Log("SequencerController is initialized.");
     }
 
     private void InitializeAudioSources()
@@ -52,24 +64,50 @@ public class SequencerController : MonoBehaviour
 
     public void Play()
     {
-        if (isPlaying || grid == null) return;
+        if (!isInitialized)
+        {
+            Debug.LogError("Cannot start sequencer: Grid is not initialized.");
+            return;
+        }
+
+        if (isPlaying)
+        {
+            Debug.LogWarning("Sequencer is already playing.");
+            return;
+        }
+
         isPlaying = true;
         currentStep = 0;
         StartCoroutine(PlaySequence());
+        Debug.Log("Sequencer started.");
     }
 
     public void Pause()
     {
+        if (!isPlaying)
+        {
+            Debug.LogWarning("Sequencer is not playing.");
+            return;
+        }
+
         isPlaying = false;
         StopAllCoroutines();
+        Debug.Log("Sequencer paused.");
     }
 
     public void Stop()
     {
+        if (!isPlaying)
+        {
+            Debug.LogWarning("Sequencer is not playing.");
+            return;
+        }
+
         isPlaying = false;
         StopAllCoroutines();
         ResetAllColumns();
         currentStep = 0;
+        Debug.Log("Sequencer stopped.");
     }
 
     private IEnumerator PlaySequence()
@@ -107,18 +145,16 @@ public class SequencerController : MonoBehaviour
 
     private void HighlightColumn(int columnIndex)
     {
-        // Reset all columns before highlighting the current column
         ResetAllColumns();
-
         for (int row = 0; row < grid.rows; row++)
         {
             CustomToggle toggle = grid.GetToggleAt(row, columnIndex);
             if (toggle != null)
             {
-                // Temporarily tint the column's step with the active color
                 toggle.SetDefaultOffColor(activeColumnColor);
             }
         }
+        Debug.Log($"Highlighting column: {columnIndex}");
     }
 
     private void ResetAllColumns()
@@ -132,11 +168,23 @@ public class SequencerController : MonoBehaviour
                 CustomToggle toggle = grid.GetToggleAt(row, col);
                 if (toggle != null)
                 {
-                    // Reset to the appropriate default color based on whether it's a black or white key row
                     bool isBlackKey = grid.IsBlackKey(row % 12);
                     toggle.SetDefaultOffColor(isBlackKey ? grid.blackKeyRowColor : grid.whiteKeyRowColor);
                 }
             }
         }
+    }
+
+    public void UpdateStepDuration()
+    {
+        stepDuration = 60f / (bpm * 4);
+        Debug.Log($"Step duration updated to {stepDuration} seconds per step at {bpm} BPM.");
+    }
+
+    private void UpdateBpm(float newBpm)
+    {
+        bpm = newBpm;
+        UpdateStepDuration();
+        Debug.Log($"BPM updated to {bpm}.");
     }
 }

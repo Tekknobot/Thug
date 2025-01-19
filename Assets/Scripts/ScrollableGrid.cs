@@ -59,9 +59,6 @@ public class ScrollableGrid : MonoBehaviour
         stepPanel.pivot = new Vector2(0, 1); // Top-left pivot
         stepPanel.anchoredPosition = Vector2.zero; // Align with top-left corner
         stepPanel.sizeDelta = new Vector2(cellSize * columns + (columns - 1) * cellSpacing, cellSize * rows + (rows - 1) * cellSpacing);
-
-        // Dynamically assign the "SequencerGrid" tag to the stepPanel
-        stepPanel.gameObject.tag = "SequencerGrid";
     }
 
 

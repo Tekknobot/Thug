@@ -36,9 +36,11 @@ public class CustomToggle : MonoBehaviour, IPointerClickHandler, IDragHandler
         currentOffColor = color; // Update the default off color
         if (!isOn && background != null)
         {
+            Debug.Log($"Setting color to {color} for {name}");
             background.color = currentOffColor; // Set the initial color
         }
     }
+
 
     /// <summary>
     /// Toggle the state when clicked.
