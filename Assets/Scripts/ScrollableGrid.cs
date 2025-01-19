@@ -151,13 +151,31 @@ public class ScrollableGrid : MonoBehaviour
 
     void AdjustScrollRectContentSizes()
     {
-        // Adjust the size for the PianoPanel
-        float pianoContentHeight = pianoPanel.sizeDelta.y;
+        // Calculate the actual grid dimensions
+        float stepContentWidth = (cellSize + cellSpacing) * columns - cellSpacing;
+        float stepContentHeight = (cellSize + cellSpacing) * rows - cellSpacing;
+
+        // Set the ScrollRectContent size manually
+        scrollRectContent.sizeDelta = new Vector2(stepContentWidth, stepContentHeight);
+
+        // Ensure the StepPanel also matches the content size
+        stepPanel.sizeDelta = new Vector2(stepContentWidth, stepContentHeight);
+
+        // Adjust PianoPanel to fit rows
+        float pianoContentHeight = (cellSize + cellSpacing) * rows - cellSpacing;
         pianoScrollRectContent.sizeDelta = new Vector2(pianoKeyWidth, pianoContentHeight);
 
-        // Adjust the ScrollRect Content size for the StepPanel
-        float stepContentWidth = stepPanel.sizeDelta.x;
-        scrollRectContent.sizeDelta = new Vector2(stepContentWidth, pianoContentHeight);
+        // Force Unity to recalculate the layout
+        Canvas.ForceUpdateCanvases();
+        UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRectContent);
+
+        // Adjust the width of ScrollRectContent manually after it's built
+        float manualWidthAdjustmentFactor = 0.35f; // Adjust this factor as needed (e.g., 0.8 for 80%)
+        float adjustedWidth = stepContentWidth * manualWidthAdjustmentFactor;
+        scrollRectContent.sizeDelta = new Vector2(adjustedWidth, stepContentHeight);
+
+        // Debug output for verification
+        Debug.Log($"ScrollRectContent (Adjusted): Width={scrollRectContent.sizeDelta.x}, Height={scrollRectContent.sizeDelta.y}");
     }
 
     private void OnStepScrollChanged(Vector2 scrollPosition)

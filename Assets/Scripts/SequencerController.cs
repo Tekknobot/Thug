@@ -19,6 +19,7 @@ public class SequencerController : MonoBehaviour
     public Color activeColumnColor = new Color(1f, 0.8f, 0.4f, 0.5f);
 
     public UnityEngine.UI.Slider bpmSlider; // Reference to the BPM slider
+    public Synthesizer synthesizer; // Reference to the synthesizer
 
     private void Start()
     {
@@ -95,20 +96,6 @@ public class SequencerController : MonoBehaviour
         Debug.Log("Sequencer paused.");
     }
 
-    public void Stop()
-    {
-        if (!isPlaying)
-        {
-            Debug.LogWarning("Sequencer is not playing.");
-            return;
-        }
-
-        isPlaying = false;
-        StopAllCoroutines();
-        ResetAllColumns();
-        currentStep = 0;
-        Debug.Log("Sequencer stopped.");
-    }
 
     private IEnumerator PlaySequence()
     {
@@ -123,25 +110,79 @@ public class SequencerController : MonoBehaviour
 
     private void PlayStep(int step)
     {
+        // Keep track of active rows in this step
+        List<int> activeRows = new List<int>();
+
         for (int row = 0; row < grid.rows; row++)
         {
             CustomToggle toggle = grid.GetToggleAt(row, step);
+
             if (toggle != null && toggle.GetState())
             {
+                // Play the note for the active cell
                 PlayNote(row);
+                activeRows.Add(row); // Track the row playing
             }
         }
+
+        // Stop notes for rows that are no longer active
+        StopInactiveNotes(activeRows);
     }
 
     private void PlayNote(int row)
     {
-        if (row >= 0 && row < noteClips.Length)
+        if (row < 0 || row >= grid.rows) return;
+
+        // Calculate the frequency for the given row, starting from C1
+        float frequency = GetFrequencyForRow(row);
+
+        Debug.Log($"Playing note for row {row} at frequency {frequency} Hz");
+
+        // Trigger the synthesizer to play the calculated frequency
+        if (synthesizer != null)
         {
-            AudioSource source = audioSources[row];
-            source.clip = noteClips[row];
-            source.Play();
+            synthesizer.PlayNote(frequency);
         }
     }
+
+    private void StopInactiveNotes(List<int> activeRows)
+    {
+        // Iterate through all rows
+        for (int row = 0; row < grid.rows; row++)
+        {
+            // If a row is not in the active list, stop its note
+            if (!activeRows.Contains(row) && synthesizer != null)
+            {
+                float frequency = GetFrequencyForRow(row);
+                synthesizer.StopNote(frequency); // Stop the note for this row
+            }
+        }
+    }
+
+    public void Stop()
+    {
+        isPlaying = false;
+        StopAllCoroutines();
+        ResetAllColumns();
+        currentStep = 0;
+
+        if (synthesizer != null)
+        {
+            synthesizer.StopAllNotes(); // Stop all active notes
+        }
+
+        Debug.Log("Sequencer stopped.");
+    }
+
+
+
+    private float GetFrequencyForRow(int row)
+    {
+        float baseFrequency = 32.703f; // Frequency of C1
+        int adjustedRow = grid.rows - 1 - row; // Reverse the row index
+        return baseFrequency * Mathf.Pow(2f, adjustedRow / 12f);
+    }
+
 
     private void HighlightColumn(int columnIndex)
     {
