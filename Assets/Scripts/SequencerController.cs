@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class SequencerController : MonoBehaviour
 {
@@ -20,6 +21,9 @@ public class SequencerController : MonoBehaviour
 
     public UnityEngine.UI.Slider bpmSlider; // Reference to the BPM slider
     public Synthesizer synthesizer; // Reference to the synthesizer
+    private const string BPM_KEY = "SequencerBPM";
+    private const string GRID_STATE_KEY = "SequencerGridState";
+    private const string SCROLL_POSITION_KEY = "ScrollPosition";
 
     private void Start()
     {
@@ -33,7 +37,9 @@ public class SequencerController : MonoBehaviour
         }
 
         // Calculate step duration based on the initial BPM
-        UpdateStepDuration();
+        UpdateStepDuration(); 
+
+        StartCoroutine(LoadGridState());     
     }
 
     private IEnumerator WaitForGridInitialization()
@@ -61,6 +67,13 @@ public class SequencerController : MonoBehaviour
             AudioSource source = Instantiate(audioSourcePrefab, transform);
             audioSources.Add(source);
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        // Save the sequencer state when the application quits
+        SaveSequencerState();
+        Debug.Log("Sequencer state saved on application quit.");
     }
 
     public void Play()
@@ -228,4 +241,90 @@ public class SequencerController : MonoBehaviour
         UpdateStepDuration();
         Debug.Log($"BPM updated to {bpm}.");
     }
+
+    public void SaveSequencerState()
+    {
+        // Save BPM
+        PlayerPrefs.SetFloat(BPM_KEY, bpm);
+
+        // Save grid state
+        string gridState = "";
+        for (int row = 0; row < grid.rows; row++)
+        {
+            for (int col = 0; col < grid.columns; col++)
+            {
+                CustomToggle toggle = grid.GetToggleAt(row, col);
+                gridState += toggle != null && toggle.GetState() ? "1" : "0";
+            }
+        }
+        PlayerPrefs.SetString(GRID_STATE_KEY, gridState);
+
+        // Save scroll position
+        if (grid.stepScrollRect != null)
+        {
+            PlayerPrefs.SetFloat(SCROLL_POSITION_KEY, grid.stepScrollRect.verticalScrollbar.value);
+        }
+
+        PlayerPrefs.Save();
+        Debug.Log("Sequencer state and scroll position saved.");
+    }
+
+
+    public IEnumerator LoadGridState()
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        // Wait until grid is initialized
+        while (!isInitialized)
+        {
+            yield return null;
+        }
+
+        // Load BPM from PlayerPrefs
+        if (PlayerPrefs.HasKey(BPM_KEY))
+        {
+            bpm = PlayerPrefs.GetFloat(BPM_KEY, 120f);
+            UpdateStepDuration(); // Recalculate step duration with the loaded BPM
+            if (bpmSlider != null)
+            {
+                bpmSlider.value = bpm; // Update slider to match loaded BPM
+            }
+            Debug.Log($"Sequencer BPM loaded: {bpm}");
+        }
+
+        // Load grid state from PlayerPrefs
+        if (PlayerPrefs.HasKey(GRID_STATE_KEY))
+        {
+            string gridState = PlayerPrefs.GetString(GRID_STATE_KEY, "");
+            int index = 0;
+
+            for (int row = 0; row < grid.rows; row++)
+            {
+                for (int col = 0; col < grid.columns; col++)
+                {
+                    if (index < gridState.Length)
+                    {
+                        CustomToggle toggle = grid.GetToggleAt(row, col);
+                        if (toggle != null)
+                        {
+                            toggle.SetState(gridState[index] == '1');
+                        }
+                        index++;
+                    }
+                }
+            }
+
+            Debug.Log("Sequencer grid state loaded.");
+        }
+
+        // Load scroll position
+        if (PlayerPrefs.HasKey(SCROLL_POSITION_KEY) && grid.stepScrollRect != null)
+        {
+            float scrollValue = PlayerPrefs.GetFloat(SCROLL_POSITION_KEY);
+            grid.stepScrollRect.verticalScrollbar.value = scrollValue;
+            Debug.Log($"Sequencer scroll value loaded: {scrollValue}");
+        }
+    }
+
+
 }

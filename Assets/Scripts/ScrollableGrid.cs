@@ -21,6 +21,7 @@ public class ScrollableGrid : MonoBehaviour
     private RectTransform stepPanel;
     public Color blackKeyRowColor = Color.gray;  // Color for rows aligned with black keys
     public Color whiteKeyRowColor = Color.white; // Color for rows aligned with white keys
+    public SequencerController sequencerController;
 
     void Start()
     {
