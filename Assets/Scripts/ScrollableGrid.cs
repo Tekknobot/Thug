@@ -87,6 +87,16 @@ public class ScrollableGrid : MonoBehaviour
                 textComponent.text = $"{pitchNames[pitchIndex]}{octave}"; // E.g., "B3", "A#3", etc.
             }
 
+            PianoKey pianoKey = key.GetComponent<PianoKey>();
+            if (pianoKey != null)
+            {
+                // Calculate the key index and set the frequency
+                int keyIndex = reverseIndex; // Start from 0 for C1 and increment
+                pianoKey.frequency = pianoKey.CalculateFrequency(keyIndex);
+                pianoKey.keyIndex = keyIndex;
+                Debug.Log($"Key {pitchNames[pitchIndex]}{octave} assigned frequency {pianoKey.frequency} Hz");
+            }
+
             Image keyImage = key.GetComponent<Image>();
             Button keyButton = key.GetComponent<Button>();
             if (keyImage != null && keyButton != null)
@@ -108,6 +118,7 @@ public class ScrollableGrid : MonoBehaviour
             }
         }
     }
+
 
 
     void PopulateStepPanel()

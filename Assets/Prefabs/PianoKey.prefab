@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1775919327366482139}
   - component: {fileID: 2763714377797000942}
   - component: {fileID: 5117296320843725071}
+  - component: {fileID: -9122681576790001055}
   m_Layer: 5
   m_Name: PianoKey
   m_TagString: Untagged
@@ -121,6 +122,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &-9122681576790001055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2696865138440520811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b07fd2370f23342c4a5adbb429237f42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  synthesizerTag: Synthesizer
+  keyIndex: 0
 --- !u!1 &6131822781391107511
 GameObject:
   m_ObjectHideFlags: 0

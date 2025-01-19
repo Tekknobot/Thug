@@ -6,6 +6,7 @@ TagManager:
   tags:
   - SequencerGrid
   - SequencerController
+  - Synthesizer
   layers:
   - Default
   - TransparentFX

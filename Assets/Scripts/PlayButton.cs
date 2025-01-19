@@ -4,11 +4,13 @@ using UnityEngine.UI;
 public class PlayButton : MonoBehaviour
 {
     public string sequencerControllerTag = "SequencerController"; // Tag for the SequencerController
-    public Sprite playIcon; // Play button icon
-    public Sprite stopIcon; // Stop button icon
+    public string synthesizerTag = "Synthesizer";                // Tag for the Synthesizer
+    public Sprite playIcon;                                      // Play button icon
+    public Sprite stopIcon;                                      // Stop button icon
 
-    private Button playButton; // Reference to the button
-    public SequencerController sequencerController; // Reference to the SequencerController
+    private Button playButton;                                   // Reference to the button
+    public SequencerController sequencerController;              // Reference to the SequencerController
+    private Synthesizer synthesizer;                             // Reference to the Synthesizer
 
     private void Start()
     {
@@ -20,6 +22,13 @@ public class PlayButton : MonoBehaviour
             {
                 sequencerController = controllerObject.GetComponent<SequencerController>();
             }
+        }
+
+        // Find the Synthesizer by tag
+        GameObject synthObject = GameObject.FindGameObjectWithTag(synthesizerTag);
+        if (synthObject != null)
+        {
+            synthesizer = synthObject.GetComponent<Synthesizer>();
         }
 
         // Get the Button component and set up the listener
@@ -44,6 +53,12 @@ public class PlayButton : MonoBehaviour
         if (sequencerController.isPlaying)
         {
             sequencerController.Stop();
+
+            // Stop all notes if the synthesizer is available
+            if (synthesizer != null)
+            {
+                synthesizer.StopAllNotes();
+            }
         }
         else
         {
