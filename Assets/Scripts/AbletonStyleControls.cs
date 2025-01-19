@@ -6,7 +6,6 @@ public class AbletonStyleControls : MonoBehaviour
     public SequencerController sequencerController; // Reference to SequencerController
     public Canvas canvas; // Reference to the Canvas
     public Sprite playIcon; // Icon for the Play button
-    public Sprite pauseIcon; // Icon for the Pause button
     public Sprite stopIcon; // Icon for the Stop (Play toggled) button
 
     public Vector2 buttonSize = new Vector2(30, 30); // Size of each button
@@ -24,9 +23,8 @@ public class AbletonStyleControls : MonoBehaviour
         // Create the button group
         GameObject buttonGroup = CreateButtonGroup();
 
-        // Create and configure the Play and Pause buttons
+        // Create and configure the Play/Stop button
         CreatePlayButton(buttonGroup.transform);
-        CreatePauseButton(buttonGroup.transform);
     }
 
     /// <summary>
@@ -55,7 +53,7 @@ public class AbletonStyleControls : MonoBehaviour
 
         // Configure RectTransform
         RectTransform rectTransform = buttonGroupObject.GetComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(buttonSize.x * 2 + buttonSpacing, buttonSize.y);
+        rectTransform.sizeDelta = new Vector2(buttonSize.x, buttonSize.y);
         rectTransform.anchoredPosition = groupPosition;
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f); // Center anchor
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
@@ -97,32 +95,5 @@ public class AbletonStyleControls : MonoBehaviour
         playButtonScript.sequencerController = sequencerController;
         playButtonScript.playIcon = playIcon;
         playButtonScript.stopIcon = stopIcon;
-    }
-
-    /// <summary>
-    /// Creates the Pause button and attaches the PauseButton script.
-    /// </summary>
-    /// <param name="parent">Parent transform.</param>
-    private void CreatePauseButton(Transform parent)
-    {
-        GameObject pauseButtonObject = new GameObject("PauseButton", typeof(RectTransform), typeof(Button), typeof(Image));
-        pauseButtonObject.transform.SetParent(parent);
-
-        // Configure RectTransform
-        RectTransform rectTransform = pauseButtonObject.GetComponent<RectTransform>();
-        rectTransform.sizeDelta = buttonSize;
-
-        // Configure Button
-        Button pauseButton = pauseButtonObject.GetComponent<Button>();
-
-        // Configure Image
-        Image image = pauseButtonObject.GetComponent<Image>();
-        image.sprite = pauseIcon;
-        image.type = Image.Type.Simple;
-        image.color = Color.white; // Default button color
-
-        // Attach the PauseButton script dynamically
-        PauseButton pauseButtonScript = pauseButtonObject.AddComponent<PauseButton>();
-        pauseButtonScript.sequencerController = sequencerController;
     }
 }

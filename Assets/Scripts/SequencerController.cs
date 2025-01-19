@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using TMPro; // Import TextMeshPro namespace
 
 public class SequencerController : MonoBehaviour
 {
@@ -24,6 +25,8 @@ public class SequencerController : MonoBehaviour
     private const string BPM_KEY = "SequencerBPM";
     private const string GRID_STATE_KEY = "SequencerGridState";
     private const string SCROLL_POSITION_KEY = "ScrollPosition";
+    public TextMeshProUGUI bpmText; // Reference to TextMeshPro text for displaying BPM
+
 
     private void Start()
     {
@@ -239,8 +242,18 @@ public class SequencerController : MonoBehaviour
     {
         bpm = newBpm;
         UpdateStepDuration();
+        UpdateBpmText(); // Update the BPM text
         Debug.Log($"BPM updated to {bpm}.");
     }
+
+    private void UpdateBpmText()
+    {
+        if (bpmText != null)
+        {
+            bpmText.text = bpm.ToString("F0"); // Display BPM as a whole number
+        }
+    }
+
 
     public void SaveSequencerState()
     {
