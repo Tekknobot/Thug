@@ -166,10 +166,10 @@ public class ScrollableGrid : MonoBehaviour
     void AdjustScrollRectContentSizes()
     {
         // Set the ScrollRectContent size manually
-        scrollRectContent.sizeDelta = new Vector2(150, 1500);
+        scrollRectContent.sizeDelta = new Vector2(200, 1500);
 
         // Adjust PianoPanel to fit rows
-        pianoScrollRectContent.sizeDelta = new Vector2(150, 1500);
+        pianoScrollRectContent.sizeDelta = new Vector2(200, 1500);
 
         // Force Unity to recalculate the layout
         Canvas.ForceUpdateCanvases();
