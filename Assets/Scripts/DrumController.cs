@@ -6,26 +6,21 @@ using TMPro; // Import TextMeshPro namespace
 
 public class DrumController : MonoBehaviour
 {
-    public AudioSource audioSourcePrefab;  // Prefab for audio sources
-    public AudioClip[] drumClips;          // Array of drum sounds (Kick, Snare, etc.)
-    public float bpm = 120f;               // Default BPM
+    public DrumSampler drumSampler;   // Reference to the DrumSynthesizer
+    public float bpm = 120f;                  // Default BPM
 
     [HideInInspector]
     public bool isPlaying = false;
     [HideInInspector]
-    public bool isInitialized = false;    // Tracks whether initialization is complete
+    public bool isInitialized = false;       // Tracks whether initialization is complete
 
     private DrumMachineManager drumGrid;
     private int currentStep = 0;
-    private List<AudioSource> audioSources = new List<AudioSource>();
     private float stepDuration;
     public Color activeColumnColor = new Color(1f, 0.8f, 0.4f, 0.5f);
 
-    public Slider bpmSlider;              // Reference to the BPM slider
-    private const string BPM_KEY = "DrumSequencerBPM";
-    private const string GRID_STATE_KEY = "DrumSequencerGridState";
-    private const string SCROLL_POSITION_KEY = "DrumScrollPosition";
-    public TextMeshProUGUI bpmText;       // Reference to TextMeshPro text for displaying BPM
+    public Slider bpmSlider;                 // Reference to the BPM slider
+    public TextMeshProUGUI bpmText;          // Reference to TextMeshPro text for displaying BPM
 
     private void Start()
     {
@@ -41,35 +36,35 @@ public class DrumController : MonoBehaviour
         // Calculate step duration based on the initial BPM
         UpdateStepDuration();
 
-        StartCoroutine(LoadGridStateFromJson());
+        StartCoroutine(LoadDrumSequencerState());
     }
 
     private IEnumerator WaitForGridInitialization()
     {
-        // Wait until the DrumMachineManager is found
         while (drumGrid == null)
         {
             GameObject gridObject = GameObject.FindGameObjectWithTag("DrumMachineGrid");
             if (gridObject != null)
             {
                 drumGrid = gridObject.GetComponent<DrumMachineManager>();
+                if (drumGrid != null)
+                {
+                    Debug.Log("Drum grid found and assigned.");
+                }
+                else
+                {
+                    Debug.LogError("Drum grid GameObject found, but DrumMachineManager script is missing!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Drum grid GameObject with tag 'DrumMachineGrid' not found. Retrying...");
             }
             yield return null; // Wait for the next frame
         }
 
-        InitializeAudioSources();
         isInitialized = true; // Set the initialized flag
         Debug.Log("DrumController is initialized.");
-    }
-
-    private void InitializeAudioSources()
-    {
-        for (int i = 0; i < drumGrid.drumRows; i++)
-        {
-            AudioSource source = Instantiate(audioSourcePrefab, transform);
-            source.clip = drumClips[i];
-            audioSources.Add(source);
-        }
     }
 
     public void Play()
@@ -92,17 +87,23 @@ public class DrumController : MonoBehaviour
         Debug.Log("Drum sequencer started.");
     }
 
-    public void Pause()
+    public void Stop()
     {
         if (!isPlaying)
         {
-            Debug.LogWarning("Drum sequencer is not playing.");
+            Debug.LogWarning("Drum sequencer is not playing, no need to stop.");
             return;
         }
 
-        isPlaying = false;
-        StopAllCoroutines();
-        Debug.Log("Drum sequencer paused.");
+        isPlaying = false; // Set the playing state to false
+        StopAllCoroutines(); // Stop the PlaySequence coroutine
+
+        // Reset the grid visual state
+        ResetAllColumns();
+
+        currentStep = 0; // Optionally reset the current step to 0
+
+        Debug.Log("Drum sequencer stopped.");
     }
 
     private IEnumerator PlaySequence()
@@ -121,12 +122,22 @@ public class DrumController : MonoBehaviour
         for (int row = 0; row < drumGrid.drumRows; row++)
         {
             CustomToggle toggle = drumGrid.GetToggleAt(row, step);
-
             if (toggle != null && toggle.GetState())
             {
-                audioSources[row].PlayOneShot(audioSources[row].clip);
+                PlayDrumSample(row);
             }
         }
+    }
+
+    private void PlayDrumSample(int row)
+    {
+        if (drumSampler == null)
+        {
+            Debug.LogError("DrumSampler is not assigned!");
+            return;
+        }
+
+        drumSampler.PlayDrum(row);
     }
 
     private void HighlightColumn(int columnIndex)
@@ -182,69 +193,14 @@ public class DrumController : MonoBehaviour
         }
     }
 
-    public IEnumerator LoadGridStateFromJson()
+    public void SaveDrumSequencerState()
     {
-        // Ensure grid initialization is complete
-        while (!isInitialized)
+        if (!isInitialized)
         {
-            yield return null;
+            Debug.LogWarning("Cannot save state: Drum grid is not initialized.");
+            return;
         }
 
-        // Load data from JSON using SaveSystem
-        SequencerData data = SaveSystem.Load();
-
-        if (data == null)
-        {
-            Debug.LogWarning("No saved data found. Loading default grid state.");
-            yield break; // Exit if no saved data exists
-        }
-
-        // Apply the loaded BPM
-        bpm = data.bpm;
-        UpdateStepDuration(); // Update step duration based on loaded BPM
-
-        if (bpmSlider != null)
-        {
-            bpmSlider.value = bpm; // Sync slider with the loaded BPM
-        }
-
-        // Deserialize the grid state string
-        if (!string.IsNullOrEmpty(data.gridState))
-        {
-            int index = 0;
-            for (int row = 0; row < drumGrid.drumRows; row++)
-            {
-                for (int col = 0; col < drumGrid.drumColumns; col++)
-                {
-                    if (index < data.gridState.Length)
-                    {
-                        CustomToggle toggle = drumGrid.GetToggleAt(row, col);
-                        if (toggle != null)
-                        {
-                            toggle.SetState(data.gridState[index] == '1'); // Set toggle state
-                        }
-                        index++;
-                    }
-                }
-            }
-            Debug.Log("Drum grid state loaded from JSON.");
-        }
-        else
-        {
-            Debug.LogWarning("Loaded grid state is empty.");
-        }
-
-        // Apply the saved scroll position
-        if (drumGrid.drumScrollRect != null)
-        {
-            drumGrid.drumScrollRect.verticalScrollbar.value = data.scrollPosition;
-            Debug.Log($"Scroll position loaded: {data.scrollPosition}");
-        }
-    }
-
-    public void SaveSequencerState()
-    {
-        // Save grid state
         string gridState = "";
         for (int row = 0; row < drumGrid.drumRows; row++)
         {
@@ -257,10 +213,74 @@ public class DrumController : MonoBehaviour
 
         float scrollPosition = drumGrid.drumScrollRect?.verticalScrollbar.value ?? 0f;
 
-        // Create the data object
-        SequencerData data = new SequencerData(bpm, gridState, scrollPosition);
+        DrumSequencerData data = new DrumSequencerData(bpm, gridState, scrollPosition);
 
-        // Save the data
-        SaveSystem.Save(data);
+        SaveSystem.SaveDrum(data);
+        Debug.Log("Drum sequencer state saved.");
+    }
+
+    public IEnumerator LoadDrumSequencerState()
+    {
+        // Ensure grid initialization is complete
+        while (!isInitialized)
+        {
+            yield return null;
+        }
+
+       DrumSequencerData data = SaveSystem.LoadDrum();
+
+        if (data == null)
+        {
+            Debug.LogWarning("No saved data found. Loading default drum sequencer state.");
+            yield break;
+        }
+
+        bpm = data.bpm;
+        UpdateStepDuration();
+
+        if (bpmSlider != null)
+        {
+            bpmSlider.value = bpm;
+        }
+
+        if (!string.IsNullOrEmpty(data.gridState))
+        {
+            int index = 0;
+            for (int row = 0; row < drumGrid.drumRows; row++)
+            {
+                for (int col = 0; col < drumGrid.drumColumns; col++)
+                {
+                    if (index < data.gridState.Length)
+                    {
+                        CustomToggle toggle = drumGrid.GetToggleAt(row, col);
+                        if (toggle != null)
+                        {
+                            toggle.SetState(data.gridState[index] == '1');
+                        }
+                        index++;
+                    }
+                }
+            }
+            Debug.Log("Drum grid state loaded from save file.");
+        }
+
+        if (drumGrid.drumScrollRect != null)
+        {
+            drumGrid.drumScrollRect.verticalScrollbar.value = data.scrollPosition;
+            Debug.Log($"Scroll position loaded: {data.scrollPosition}");
+        }
+    }
+
+    private void OnApplicationPause(bool pause)
+    {
+        if (pause)
+        {
+            SaveDrumSequencerState();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveDrumSequencerState();
     }
 }

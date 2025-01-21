@@ -1,41 +1,65 @@
-// DrumMachineManager.cs
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 public class DrumMachineManager : MonoBehaviour
 {
-    public ScrollableGrid drumGrid;          // Grid for the drum machine (steps and rows)
-    public ScrollRect drumScrollRect;       // ScrollRect for the drum grid (horizontal scrolling)
-    public ScrollRect pianoRollScrollRectPrefab;
+    public ScrollRect drumScrollRect;             // ScrollRect for the drum grid
+    public GameObject drumStepPrefab;            // Prefab for individual drum step toggles
+    public RectTransform drumContent;            // Public object for the ScrollRect content
+    public int drumRows = 8;                     // Number of drum tracks (rows)
+    public int drumColumns = 16;                 // Number of steps per track
+    public float cellSize = 50f;                 // Size of each step cell
+    public float cellSpacing = 5f;              // Spacing between cells
 
-    public GameObject drumStepPrefab;       // Prefab for individual drum step toggles
-    public int drumRows = 5;                // Number of drum tracks (rows)
-    public int drumColumns = 16;            // Number of steps per track
-    public float cellSize = 50f;            // Size of each step cell
-    public float cellSpacing = 5f;          // Spacing between cells
-    public string[] drumTrackNames = { "Kick", "Snare", "Hi-Hat", "Clap", "Percussion" };
+    // Updated drum track names
+    public string[] drumTrackNames = { "Kick", "Snare", "Hi-Hat", "Open-Hat", "Clap", "Ride", "Rim", "Crash" };
 
     private RectTransform drumPanel;
 
     void Start()
     {
+        // Ensure drumTrackNames matches the number of rows
+        if (drumTrackNames.Length != drumRows)
+        {
+            Debug.LogError($"The number of drumTrackNames ({drumTrackNames.Length}) does not match drumRows ({drumRows}). Adjust the drumRows or drumTrackNames array.");
+            return;
+        }
+
+        // Ensure drumContent is assigned
+        if (drumContent == null)
+        {
+            Debug.LogError("Drum content (ScrollRect content) is not assigned in the Inspector!");
+            return;
+        }
+
+        // Link the ScrollRect content
+        drumScrollRect.content = drumContent;
+
         CreateDrumGrid();
-        CreatePianoRoll();
+        AdjustScrollRectContentSize();
     }
 
     void CreateDrumGrid()
     {
-        // Create the DrumPanel (linked to drumScrollRect content)
+        Debug.Log("Creating drum grid...");
+
+        if (drumContent == null)
+        {
+            Debug.LogError("Drum content (ScrollRect content) is null! Assign it in the Inspector.");
+            return;
+        }
+
+        // Create the DrumPanel (parent for grid elements)
         drumPanel = new GameObject("DrumPanel", typeof(RectTransform)).GetComponent<RectTransform>();
-        drumPanel.SetParent(drumScrollRect.content);
+        drumPanel.SetParent(drumContent);
         drumPanel.anchorMin = new Vector2(0, 1);
         drumPanel.anchorMax = new Vector2(0, 1);
         drumPanel.pivot = new Vector2(0, 1); // Top-left pivot
         drumPanel.anchoredPosition = Vector2.zero;
 
+        Debug.Log("Populating drum grid...");
         PopulateDrumGrid();
-        AdjustScrollRectContentSize();
     }
 
     void PopulateDrumGrid()
@@ -71,15 +95,21 @@ public class DrumMachineManager : MonoBehaviour
 
     void AdjustScrollRectContentSize()
     {
-        drumScrollRect.content.sizeDelta = new Vector2(200, 200);
+        float width = drumColumns * (cellSize + cellSpacing) - cellSpacing;
+        float height = drumRows * (cellSize + cellSpacing) - cellSpacing;
+
+        drumContent.sizeDelta = new Vector2(width, height);
+        drumContent.anchorMin = new Vector2(0, 1); // Top-left corner
+        drumContent.anchorMax = new Vector2(0, 1);
+        drumContent.pivot = new Vector2(0, 1);     // Top-left pivot
+        drumContent.anchoredPosition = Vector2.zero;
+
+        Debug.Log($"Drum grid content size adjusted: Width={width}, Height={height}");
     }
 
     /// <summary>
     /// Retrieve the toggle at the specified drum row and step.
     /// </summary>
-    /// <param name="row">Row index (track).</param>
-    /// <param name="step">Step index.</param>
-    /// <returns>CustomToggle if it exists; otherwise, null.</returns>
     public CustomToggle GetToggleAt(int row, int step)
     {
         int childIndex = row * drumColumns + step;
@@ -88,47 +118,5 @@ public class DrumMachineManager : MonoBehaviour
             return drumPanel.GetChild(childIndex).GetComponent<CustomToggle>();
         }
         return null;
-    }
-
-    void CreatePianoRoll()
-    {
-        ScrollRect pianoRollScrollRect = Instantiate(pianoRollScrollRectPrefab, transform);
-        RectTransform pianoRollRect = pianoRollScrollRect.content;
-
-        pianoRollRect.sizeDelta = new Vector2(cellSize * 2, drumRows * (cellSize + cellSpacing));
-        pianoRollRect.anchoredPosition = Vector2.zero;
-
-        for (int i = 0; i < drumRows; i++)
-        {
-            GameObject pianoKey = new GameObject(drumTrackNames[i], typeof(RectTransform), typeof(Button));
-            RectTransform keyRect = pianoKey.GetComponent<RectTransform>();
-            keyRect.SetParent(pianoRollRect);
-            keyRect.anchorMin = new Vector2(0, 1);
-            keyRect.anchorMax = new Vector2(1, 1);
-            keyRect.pivot = new Vector2(0.5f, 1);
-            keyRect.sizeDelta = new Vector2(0, cellSize);
-            keyRect.anchoredPosition = new Vector2(0, -i * (cellSize + cellSpacing));
-
-            Button keyButton = pianoKey.GetComponent<Button>();
-            keyButton.onClick.AddListener(() => PlayDrumSound(i));
-
-            TMP_Text keyText = new GameObject("KeyLabel", typeof(RectTransform), typeof(TMP_Text)).GetComponent<TMP_Text>();
-            keyText.transform.SetParent(pianoKey.transform);
-            keyText.text = drumTrackNames[i];
-            keyText.fontSize = 18;
-            keyText.alignment = TextAlignmentOptions.Center;
-            RectTransform textRect = keyText.GetComponent<RectTransform>();
-            textRect.anchorMin = new Vector2(0, 0);
-            textRect.anchorMax = new Vector2(1, 1);
-            textRect.pivot = new Vector2(0.5f, 0.5f);
-            textRect.anchoredPosition = Vector2.zero;
-        }
-    }
-
-
-    void PlayDrumSound(int trackIndex)
-    {
-        Debug.Log($"Playing sound for track: {drumTrackNames[trackIndex]}");
-        // Add sound playback logic here (e.g., AudioSource.PlayOneShot)
     }
 }
