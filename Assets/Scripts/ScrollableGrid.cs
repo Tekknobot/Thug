@@ -44,7 +44,13 @@ public class ScrollableGrid : MonoBehaviour
         CreatePanels();
         PopulatePianoPanel();
         PopulateStepPanel();
-        AdjustScrollRectContentSizes();
+
+        // Ensure scroll listeners are properly registered
+        stepScrollRect.onValueChanged.AddListener(OnStepScrollChanged);
+        pianoScrollRect.onValueChanged.AddListener(OnPianoScrollChanged);
+
+        // Adjust content sizes to synchronize them
+        AdjustScrollRectContentSizes();        
     }
 
     void CreatePanels()
@@ -82,22 +88,14 @@ public class ScrollableGrid : MonoBehaviour
             keyRect.anchorMin = new Vector2(0, 1);
             keyRect.anchorMax = new Vector2(0, 1);
             keyRect.pivot = new Vector2(0, 1); // Align to top-left corner
-            keyRect.anchoredPosition = new Vector2(0, -i * (cellSize + cellSpacing)); // Position vertically
+
+            // Position vertically without spacing
+            keyRect.anchoredPosition = new Vector2(0, -i * cellSize); 
 
             TMP_Text textComponent = key.GetComponentInChildren<TMP_Text>();
             if (textComponent != null)
             {
                 textComponent.text = $"{pitchNames[pitchIndex]}{octave}"; // E.g., "B3", "A#3", etc.
-            }
-
-            PianoKey pianoKey = key.GetComponent<PianoKey>();
-            if (pianoKey != null)
-            {
-                // Calculate the key index and set the frequency
-                int keyIndex = reverseIndex; // Start from 0 for C1 and increment
-                pianoKey.frequency = pianoKey.CalculateFrequency(keyIndex);
-                pianoKey.keyIndex = keyIndex;
-                Debug.Log($"Key {pitchNames[pitchIndex]}{octave} assigned frequency {pianoKey.frequency} Hz");
             }
 
             Image keyImage = key.GetComponent<Image>();
@@ -144,16 +142,18 @@ public class ScrollableGrid : MonoBehaviour
                 stepRect.anchorMin = new Vector2(0, 1);
                 stepRect.anchorMax = new Vector2(0, 1);
                 stepRect.pivot = new Vector2(0, 1); // Align to top-left corner
-                stepRect.anchoredPosition = new Vector2(j * (cellSize + cellSpacing), -i * (cellSize + cellSpacing)); // Align in grid
 
-                // Initialize the toggle with the appropriate row type
+                // Position without spacing
+                stepRect.anchoredPosition = new Vector2(j * cellSize, -i * cellSize); 
+
+                // Initialize the toggle
                 CustomToggle customToggle = step.GetComponent<CustomToggle>();
                 if (customToggle != null)
                 {
-                    customToggle.Initialize(reverseIndex, isBlackKey); // Set row index and whether it's a black key row
+                    customToggle.Initialize(reverseIndex, isBlackKey); // Set row index and black key status
                 }
 
-                // Update the text on the step to show the pitch name
+                // Add pitch name to the step toggle, if needed
                 TMP_Text textComponent = step.GetComponentInChildren<TMP_Text>();
                 if (textComponent != null)
                 {
@@ -165,27 +165,59 @@ public class ScrollableGrid : MonoBehaviour
 
     void AdjustScrollRectContentSizes()
     {
-        // Set the ScrollRectContent size manually
+        // Calculate content height based on rows and cell size
+        float contentHeight = rows * cellSize;
+
+        // Calculate content width for the step panel
+        float contentWidth = columns * cellSize;
+
+        // Set the same height for both panels
         scrollRectContent.sizeDelta = new Vector2(200, 1500);
+        pianoScrollRectContent.sizeDelta = new Vector2(pianoKeyWidth, 1500);
 
-        // Adjust PianoPanel to fit rows
-        pianoScrollRectContent.sizeDelta = new Vector2(200, 1500);
-
-        // Force Unity to recalculate the layout
+        // Force recalculation
         Canvas.ForceUpdateCanvases();
         UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRectContent);
+        UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(pianoScrollRectContent);
 
-        // Debug output for verification
-        Debug.Log($"ScrollRectContent (Adjusted): Width={scrollRectContent.sizeDelta.x}, Height={scrollRectContent.sizeDelta.y}");
+        Debug.Log($"ScrollRectContent: Width={scrollRectContent.sizeDelta.x}, Height={scrollRectContent.sizeDelta.y}");
+        Debug.Log($"PianoScrollRectContent: Width={pianoScrollRectContent.sizeDelta.x}, Height={pianoScrollRectContent.sizeDelta.y}");
     }
 
+    private bool isSyncingScroll = false;
 
     private void OnStepScrollChanged(Vector2 scrollPosition)
     {
+        if (isSyncingScroll) return; // Prevent feedback loop
+
+        isSyncingScroll = true;
+
         // Sync the vertical scrolling of the piano panel with the step panel
-        Vector2 pianoScrollPosition = pianoScrollRect.normalizedPosition;
-        pianoScrollPosition.y = scrollPosition.y; // Match vertical scrolling
-        pianoScrollRect.normalizedPosition = pianoScrollPosition;
+        pianoScrollRect.normalizedPosition = new Vector2(
+            pianoScrollRect.normalizedPosition.x, 
+            scrollPosition.y
+        );
+
+        isSyncingScroll = false;
+
+        Debug.Log($"Step Scroll Position: {scrollPosition.y}, Piano Scroll Synchronized");
+    }
+
+    private void OnPianoScrollChanged(Vector2 scrollPosition)
+    {
+        if (isSyncingScroll) return; // Prevent feedback loop
+
+        isSyncingScroll = true;
+
+        // Sync the vertical scrolling of the step panel with the piano panel
+        stepScrollRect.normalizedPosition = new Vector2(
+            stepScrollRect.normalizedPosition.x, 
+            scrollPosition.y
+        );
+
+        isSyncingScroll = false;
+
+        Debug.Log($"Piano Scroll Position: {scrollPosition.y}, Step Scroll Synchronized");
     }
 
     public bool IsBlackKey(int pitchIndex)

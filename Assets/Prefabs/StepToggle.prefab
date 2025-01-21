@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3663689022825388020}
   - component: {fileID: 6294387385390018073}
   - component: {fileID: 3299316481117265736}
+  - component: {fileID: 6696527695470080047}
   m_Layer: 5
   m_Name: StepToggle
   m_TagString: Untagged
@@ -91,3 +92,18 @@ MonoBehaviour:
   onColor: {r: 1, g: 0, b: 0, a: 1}
   blackKeyOffColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   whiteKeyOffColor: {r: 0.77254903, g: 0.77254903, b: 0.77254903, a: 1}
+--- !u!114 &6696527695470080047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2960017692503750168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 2, y: 2}
+  m_UseGraphicAlpha: 1
