@@ -1,0 +1,266 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.UI;
+using TMPro; // Import TextMeshPro namespace
+
+public class DrumController : MonoBehaviour
+{
+    public AudioSource audioSourcePrefab;  // Prefab for audio sources
+    public AudioClip[] drumClips;          // Array of drum sounds (Kick, Snare, etc.)
+    public float bpm = 120f;               // Default BPM
+
+    [HideInInspector]
+    public bool isPlaying = false;
+    [HideInInspector]
+    public bool isInitialized = false;    // Tracks whether initialization is complete
+
+    private DrumMachineManager drumGrid;
+    private int currentStep = 0;
+    private List<AudioSource> audioSources = new List<AudioSource>();
+    private float stepDuration;
+    public Color activeColumnColor = new Color(1f, 0.8f, 0.4f, 0.5f);
+
+    public Slider bpmSlider;              // Reference to the BPM slider
+    private const string BPM_KEY = "DrumSequencerBPM";
+    private const string GRID_STATE_KEY = "DrumSequencerGridState";
+    private const string SCROLL_POSITION_KEY = "DrumScrollPosition";
+    public TextMeshProUGUI bpmText;       // Reference to TextMeshPro text for displaying BPM
+
+    private void Start()
+    {
+        StartCoroutine(WaitForGridInitialization());
+
+        // Initialize the BPM from the slider's value (if assigned)
+        if (bpmSlider != null)
+        {
+            bpm = bpmSlider.value;
+            bpmSlider.onValueChanged.AddListener(UpdateBpm); // Listen for slider changes
+        }
+
+        // Calculate step duration based on the initial BPM
+        UpdateStepDuration();
+
+        StartCoroutine(LoadGridStateFromJson());
+    }
+
+    private IEnumerator WaitForGridInitialization()
+    {
+        // Wait until the DrumMachineManager is found
+        while (drumGrid == null)
+        {
+            GameObject gridObject = GameObject.FindGameObjectWithTag("DrumMachineGrid");
+            if (gridObject != null)
+            {
+                drumGrid = gridObject.GetComponent<DrumMachineManager>();
+            }
+            yield return null; // Wait for the next frame
+        }
+
+        InitializeAudioSources();
+        isInitialized = true; // Set the initialized flag
+        Debug.Log("DrumController is initialized.");
+    }
+
+    private void InitializeAudioSources()
+    {
+        for (int i = 0; i < drumGrid.drumRows; i++)
+        {
+            AudioSource source = Instantiate(audioSourcePrefab, transform);
+            source.clip = drumClips[i];
+            audioSources.Add(source);
+        }
+    }
+
+    public void Play()
+    {
+        if (!isInitialized)
+        {
+            Debug.LogError("Cannot start drum sequencer: Grid is not initialized.");
+            return;
+        }
+
+        if (isPlaying)
+        {
+            Debug.LogWarning("Drum sequencer is already playing.");
+            return;
+        }
+
+        isPlaying = true;
+        currentStep = 0;
+        StartCoroutine(PlaySequence());
+        Debug.Log("Drum sequencer started.");
+    }
+
+    public void Pause()
+    {
+        if (!isPlaying)
+        {
+            Debug.LogWarning("Drum sequencer is not playing.");
+            return;
+        }
+
+        isPlaying = false;
+        StopAllCoroutines();
+        Debug.Log("Drum sequencer paused.");
+    }
+
+    private IEnumerator PlaySequence()
+    {
+        while (isPlaying)
+        {
+            HighlightColumn(currentStep);
+            PlayStep(currentStep);
+            currentStep = (currentStep + 1) % drumGrid.drumColumns;
+            yield return new WaitForSeconds(stepDuration);
+        }
+    }
+
+    private void PlayStep(int step)
+    {
+        for (int row = 0; row < drumGrid.drumRows; row++)
+        {
+            CustomToggle toggle = drumGrid.GetToggleAt(row, step);
+
+            if (toggle != null && toggle.GetState())
+            {
+                audioSources[row].PlayOneShot(audioSources[row].clip);
+            }
+        }
+    }
+
+    private void HighlightColumn(int columnIndex)
+    {
+        ResetAllColumns();
+        for (int row = 0; row < drumGrid.drumRows; row++)
+        {
+            CustomToggle toggle = drumGrid.GetToggleAt(row, columnIndex);
+            if (toggle != null)
+            {
+                toggle.SetDefaultOffColor(activeColumnColor);
+            }
+        }
+        Debug.Log($"Highlighting column: {columnIndex}");
+    }
+
+    private void ResetAllColumns()
+    {
+        if (drumGrid == null) return;
+
+        for (int row = 0; row < drumGrid.drumRows; row++)
+        {
+            for (int col = 0; col < drumGrid.drumColumns; col++)
+            {
+                CustomToggle toggle = drumGrid.GetToggleAt(row, col);
+                if (toggle != null)
+                {
+                    toggle.SetDefaultOffColor(Color.white);
+                }
+            }
+        }
+    }
+
+    public void UpdateStepDuration()
+    {
+        stepDuration = 60f / (bpm * 4);
+        Debug.Log($"Step duration updated to {stepDuration} seconds per step at {bpm} BPM.");
+    }
+
+    private void UpdateBpm(float newBpm)
+    {
+        bpm = newBpm;
+        UpdateStepDuration();
+        UpdateBpmText();
+        Debug.Log($"BPM updated to {bpm}.");
+    }
+
+    private void UpdateBpmText()
+    {
+        if (bpmText != null)
+        {
+            bpmText.text = bpm.ToString("F0"); // Display BPM as a whole number
+        }
+    }
+
+    public IEnumerator LoadGridStateFromJson()
+    {
+        // Ensure grid initialization is complete
+        while (!isInitialized)
+        {
+            yield return null;
+        }
+
+        // Load data from JSON using SaveSystem
+        SequencerData data = SaveSystem.Load();
+
+        if (data == null)
+        {
+            Debug.LogWarning("No saved data found. Loading default grid state.");
+            yield break; // Exit if no saved data exists
+        }
+
+        // Apply the loaded BPM
+        bpm = data.bpm;
+        UpdateStepDuration(); // Update step duration based on loaded BPM
+
+        if (bpmSlider != null)
+        {
+            bpmSlider.value = bpm; // Sync slider with the loaded BPM
+        }
+
+        // Deserialize the grid state string
+        if (!string.IsNullOrEmpty(data.gridState))
+        {
+            int index = 0;
+            for (int row = 0; row < drumGrid.drumRows; row++)
+            {
+                for (int col = 0; col < drumGrid.drumColumns; col++)
+                {
+                    if (index < data.gridState.Length)
+                    {
+                        CustomToggle toggle = drumGrid.GetToggleAt(row, col);
+                        if (toggle != null)
+                        {
+                            toggle.SetState(data.gridState[index] == '1'); // Set toggle state
+                        }
+                        index++;
+                    }
+                }
+            }
+            Debug.Log("Drum grid state loaded from JSON.");
+        }
+        else
+        {
+            Debug.LogWarning("Loaded grid state is empty.");
+        }
+
+        // Apply the saved scroll position
+        if (drumGrid.drumScrollRect != null)
+        {
+            drumGrid.drumScrollRect.verticalScrollbar.value = data.scrollPosition;
+            Debug.Log($"Scroll position loaded: {data.scrollPosition}");
+        }
+    }
+
+    public void SaveSequencerState()
+    {
+        // Save grid state
+        string gridState = "";
+        for (int row = 0; row < drumGrid.drumRows; row++)
+        {
+            for (int col = 0; col < drumGrid.drumColumns; col++)
+            {
+                CustomToggle toggle = drumGrid.GetToggleAt(row, col);
+                gridState += toggle != null && toggle.GetState() ? "1" : "0";
+            }
+        }
+
+        float scrollPosition = drumGrid.drumScrollRect?.verticalScrollbar.value ?? 0f;
+
+        // Create the data object
+        SequencerData data = new SequencerData(bpm, gridState, scrollPosition);
+
+        // Save the data
+        SaveSystem.Save(data);
+    }
+}
