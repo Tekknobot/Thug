@@ -37,7 +37,7 @@ public class DrumMachineManager : MonoBehaviour
         drumScrollRect.content = drumContent;
 
         CreateDrumGrid();
-        AdjustScrollRectContentSize();
+        AdjustScrollRectContentSize(500, 150);
     }
 
     void CreateDrumGrid()
@@ -93,19 +93,37 @@ public class DrumMachineManager : MonoBehaviour
         }
     }
 
-    void AdjustScrollRectContentSize()
+    public void AdjustScrollRectContentSize(float? manualWidth = null, float? manualHeight = null)
     {
-        float width = drumColumns * (cellSize + cellSpacing) - cellSpacing;
-        float height = drumRows * (cellSize + cellSpacing) - cellSpacing;
+        // Calculate default width and height if not manually set
+        float width = manualWidth ?? drumColumns * (cellSize + cellSpacing) - cellSpacing;
+        float height = manualHeight ?? drumRows * (cellSize + cellSpacing) - cellSpacing;
 
+        // Update the size of the content RectTransform
         drumContent.sizeDelta = new Vector2(width, height);
         drumContent.anchorMin = new Vector2(0, 1); // Top-left corner
         drumContent.anchorMax = new Vector2(0, 1);
         drumContent.pivot = new Vector2(0, 1);     // Top-left pivot
         drumContent.anchoredPosition = Vector2.zero;
 
+        // Force update of the layout to ensure the ScrollRect updates
+        Canvas.ForceUpdateCanvases();
+
+        // Update the ScrollRect to make scrollbars visible if needed
+        ScrollRect scrollRect = drumContent.GetComponentInParent<ScrollRect>();
+        if (scrollRect != null)
+        {
+            scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+            scrollRect.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+
+            // Refresh ScrollRect bounds
+            scrollRect.SetLayoutHorizontal();
+            scrollRect.SetLayoutVertical();
+        }
+
         Debug.Log($"Drum grid content size adjusted: Width={width}, Height={height}");
     }
+
 
     /// <summary>
     /// Retrieve the toggle at the specified drum row and step.
