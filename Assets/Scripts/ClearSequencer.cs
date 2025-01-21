@@ -5,6 +5,7 @@ using UnityEngine;
 public class ClearSequencer : MonoBehaviour
 {
     public ScrollableGrid grid; // Reference to the ScrollableGrid
+    public DrumMachineManager drumGrid; // Reference to the DrumMachineManager
 
     /// <summary>
     /// Clears the sequencer by turning all cells off.
@@ -32,5 +33,33 @@ public class ClearSequencer : MonoBehaviour
         }
 
         Debug.Log("Sequencer cleared!");
+    }
+
+    /// <summary>
+    /// Clears the drum grid by turning all cells off.
+    /// </summary>
+    [ContextMenu("Clear Drum Grid")] // This adds a context menu option to call the method in the editor.
+    public void ClearDrumGrid()
+    {
+        if (drumGrid == null)
+        {
+            Debug.LogError("Drum grid is not assigned!");
+            return;
+        }
+
+        // Loop through all rows and columns of the drum grid
+        for (int row = 0; row < drumGrid.drumRows; row++)
+        {
+            for (int col = 0; col < drumGrid.drumColumns; col++)
+            {
+                CustomToggle toggle = drumGrid.GetToggleAt(row, col);
+                if (toggle != null)
+                {
+                    toggle.SetState(false); // Turn the cell off
+                }
+            }
+        }
+
+        Debug.Log("Drum grid cleared!");
     }
 }

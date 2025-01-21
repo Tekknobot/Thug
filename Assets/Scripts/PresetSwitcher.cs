@@ -6,6 +6,7 @@ using System.Collections.Generic;
 public class PresetSwitcher : MonoBehaviour
 {
     public Synthesizer synthesizer; // Reference to the Synthesizer
+    public SynthVolume synthVolume; // Reference to the SynthVolume script
     public TextMeshProUGUI presetNameText; // Text to display the current preset name
     public Button previousButton; // Button to go to the previous preset
     public Button nextButton; // Button to go to the next preset
@@ -17,7 +18,13 @@ public class PresetSwitcher : MonoBehaviour
         "CrunchySquare",
         "FrenchHouseBass",
         "TechnoBass",
-        "DeepSubBass"
+        "DeepSubBass",
+        "PiercingLead",
+        "PunchyBass",
+        "MetallicPluck",
+        "DistortedSquareBass",
+        "PercussiveBlip",
+        "SmoothHouseBass"
     };
 
     private Dictionary<string, System.Action> presetActions; // Map preset names to actions
@@ -31,6 +38,13 @@ public class PresetSwitcher : MonoBehaviour
         if (synthesizer == null)
         {
             Debug.LogError("Synthesizer not assigned to PresetSwitcher!");
+            return;
+        }
+
+        // Ensure SynthVolume is assigned
+        if (synthVolume == null)
+        {
+            Debug.LogError("SynthVolume not assigned to PresetSwitcher!");
             return;
         }
 
@@ -69,7 +83,13 @@ public class PresetSwitcher : MonoBehaviour
             { "CrunchySquare", synthesizer.CrunchySquare },
             { "FrenchHouseBass", synthesizer.FrenchHouseBass },
             { "TechnoBass", synthesizer.TechnoBass },
-            { "DeepSubBass", synthesizer.DeepSubBass }
+            { "DeepSubBass", synthesizer.DeepSubBass },
+            { "PiercingLead", synthesizer.PiercingLead },
+            { "PunchyBass", synthesizer.PunchyBass },
+            { "MetallicPluck", synthesizer.MetallicPluck },
+            { "DistortedSquareBass", synthesizer.DistortedSquareBass },
+            { "PercussiveBlip", synthesizer.PercussiveBlip },
+            { "SmoothHouseBass", synthesizer.SmoothHouseBass }
         };
 
         Debug.Log($"Initialized {presetActions.Count} preset actions.");
@@ -86,6 +106,10 @@ public class PresetSwitcher : MonoBehaviour
         {
             presetAction?.Invoke(); // Invoke the corresponding preset method
             UpdatePresetName();
+
+            // Notify the SynthVolume script to update the slider
+            synthVolume.OnPresetLoaded();
+
             Debug.Log($"Preset text updated: {presetNames[currentPresetIndex]}");
             SavePreset();
         }

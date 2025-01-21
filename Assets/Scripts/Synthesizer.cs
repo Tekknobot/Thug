@@ -224,6 +224,122 @@ public class Synthesizer : MonoBehaviour
     }
 
     /// <summary>
+    /// Sets a preset for a piercing lead sound.
+    /// </summary>
+    public void PiercingLead()
+    {
+        masterVolume = 0.9f;
+        osc1Volume = 0.7f;
+        osc2Volume = 0.6f;
+        detune = 0.03f; // Slight detune for richness
+        distortionAmount = 2.2f; // High distortion for a cutting sound
+        filterCutoff = 0.85f; // High cutoff for bright tones
+        filterResonance = 0.3f; // Minimal resonance for clarity
+
+        // Envelope for sharp attack and quick decay
+        SetEnvelope(0.01f, 0.05f, 0.2f, 0.1f);
+
+        Debug.Log("Piercing Lead preset loaded!");
+    }
+
+    /// <summary>
+    /// Sets a preset for a punchy bass sound.
+    /// </summary>
+    public void PunchyBass()
+    {
+        masterVolume = 0.8f;
+        osc1Volume = 0.8f;
+        osc2Volume = 0.3f;
+        detune = 0.01f; // Minimal detune for tightness
+        distortionAmount = 2.0f; // Moderate distortion for punch
+        filterCutoff = 0.4f; // Low cutoff for deep bass
+        filterResonance = 0.5f; // Moderate resonance for slight growl
+
+        // Envelope for quick punch
+        SetEnvelope(0.01f, 0.1f, 0.3f, 0.05f);
+
+        Debug.Log("Punchy Bass preset loaded!");
+    }
+
+    /// <summary>
+    /// Sets a preset for a metallic pluck sound.
+    /// </summary>
+    public void MetallicPluck()
+    {
+        masterVolume = 0.7f;
+        osc1Volume = 0.6f;
+        osc2Volume = 0.5f;
+        detune = 0.05f; // Detune for metallic tone
+        distortionAmount = 2.5f; // High distortion for metallic effect
+        filterCutoff = 0.75f; // Medium-high cutoff for brightness
+        filterResonance = 0.6f; // High resonance for metallic character
+
+        // Envelope for percussive pluck
+        SetEnvelope(0.005f, 0.1f, 0.2f, 0.1f);
+
+        Debug.Log("Metallic Pluck preset loaded!");
+    }
+
+    /// <summary>
+    /// Sets a preset for a distorted square bass sound.
+    /// </summary>
+    public void DistortedSquareBass()
+    {
+        masterVolume = 0.8f;
+        osc1Volume = 0.7f;
+        osc2Volume = 0.4f;
+        detune = 0.02f; // Subtle detune for texture
+        distortionAmount = 3.0f; // Heavy distortion for grit
+        filterCutoff = 0.5f; // Medium cutoff for balance
+        filterResonance = 0.4f; // Low resonance for clean sound
+
+        // Envelope for sustained bass
+        SetEnvelope(0.01f, 0.2f, 0.6f, 0.2f);
+
+        Debug.Log("Distorted Square Bass preset loaded!");
+    }
+
+    /// <summary>
+    /// Sets a preset for a percussive blip sound.
+    /// </summary>
+    public void PercussiveBlip()
+    {
+        masterVolume = 0.7f;
+        osc1Volume = 0.8f;
+        osc2Volume = 0.4f;
+        detune = 0.0f; // No detune for a pure sound
+        distortionAmount = 1.0f; // Minimal distortion for clarity
+        filterCutoff = 0.9f; // High cutoff for sharp attack
+        filterResonance = 0.2f; // Low resonance to keep it short
+
+        // Envelope for very short percussive hit
+        SetEnvelope(0.001f, 0.05f, 0f, 0.01f);
+
+        Debug.Log("Percussive Blip preset loaded!");
+    }
+
+
+    /// <summary>
+    /// Sets a preset for a smooth house bass sound.
+    /// </summary>
+    public void SmoothHouseBass()
+    {
+        masterVolume = 0.75f;          // Balanced overall volume
+        osc1Volume = 0.7f;            // Strong primary oscillator
+        osc2Volume = 0.5f;            // Supporting oscillator for depth
+        detune = 0.01f;               // Subtle detune for a smooth tone
+        distortionAmount = 0.3f;      // Gentle distortion for warmth
+        filterCutoff = 0.35f;         // Low cutoff for a deep bass presence
+        filterResonance = 0.5f;       // Moderate resonance for slight punchiness
+
+        // Envelope for a smooth attack and long sustain
+        SetEnvelope(0.02f, 0.15f, 0.6f, 0.2f);
+
+        Debug.Log("Smooth House Bass preset loaded!");
+    }
+
+
+    /// <summary>
     /// Example function for setting ADSR envelope settings.
     /// This should be implemented in your synthesizer if not already.
     /// </summary>
