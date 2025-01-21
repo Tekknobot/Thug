@@ -954,7 +954,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 175755932}
   m_HandleRect: {fileID: 175755931}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1032,7 +1032,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 131.4, y: -132.84}
+  m_AnchoredPosition: {x: 128.4, y: -132.84}
   m_SizeDelta: {x: 51.7838, y: 16.3145}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &616658671
@@ -1237,7 +1237,7 @@ MonoBehaviour:
   canvas: {fileID: 853413004}
   playIcon: {fileID: 21300000, guid: 63e32dfa406b14112b1868e7a41901af, type: 3}
   stopIcon: {fileID: 21300000, guid: 0a69042bb3f2d494bb94ad8b87b13cec, type: 3}
-  buttonSize: {x: 30, y: 30}
+  buttonSize: {x: 80, y: 80}
   buttonSpacing: 0
   groupPosition: {x: 176, y: -135}
 --- !u!4 &768990467
@@ -1416,9 +1416,9 @@ MonoBehaviour:
   stepTogglePrefab: {fileID: 2960017692503750168, guid: 712802618cf5d42cab7a0d5dde3e04c1, type: 3}
   rows: 48
   columns: 16
-  cellSize: 30
-  cellSpacing: 1
-  pianoKeyWidth: 30
+  cellSize: 80
+  cellSpacing: 4
+  pianoKeyWidth: 80
   pitchNames:
   - C
   - C#
@@ -1434,7 +1434,7 @@ MonoBehaviour:
   - B
   blackKeyRowColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   whiteKeyRowColor: {r: 0.7735849, g: 0.7735849, b: 0.7735849, a: 1}
-  sequencerController: {fileID: 509158672}
+  canvasScaler: {fileID: 853413003}
 --- !u!1 &853413001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1483,12 +1483,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.617
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -1608,7 +1608,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -142, y: 291}
+  m_AnchoredPosition: {x: -145, y: 291}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &880404044
@@ -2236,7 +2236,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0000060708126}
+  m_AnchoredPosition: {x: 0, y: -0.000029755709}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &1098088993
@@ -2396,7 +2396,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 908757705}
   m_HandleRect: {fileID: 908757704}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2713,7 +2713,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 438311168}
   m_HandleRect: {fileID: 438311167}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2928,7 +2928,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -57.389023, y: -131}
+  m_AnchoredPosition: {x: -60.389027, y: -131}
   m_SizeDelta: {x: 269.22, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1689111263
@@ -3030,7 +3030,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 126, y: -181.3}
+  m_AnchoredPosition: {x: 122.99999, y: -181.3}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1729019485
@@ -3163,7 +3163,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 182.1, y: -181.3}
+  m_AnchoredPosition: {x: 179.1, y: -181.3}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1893610624
@@ -3330,8 +3330,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.0000067313754, y: 0.0000060708126}
-  m_SizeDelta: {x: -336.1031, y: 300}
+  m_AnchoredPosition: {x: -0.00000071525574, y: -0.000029779689}
+  m_SizeDelta: {x: -340.15, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1940558730
 MonoBehaviour:
@@ -3381,7 +3381,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2.1, y: -181}
+  m_AnchoredPosition: {x: -0.9000046, y: -181}
   m_SizeDelta: {x: 185.034, y: 16.3145}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1962272184
@@ -3734,7 +3734,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 934295384}
   m_HandleRect: {fileID: 934295383}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -3897,7 +3897,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -177, y: -181.3}
+  m_AnchoredPosition: {x: -180, y: -181.3}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2107765491

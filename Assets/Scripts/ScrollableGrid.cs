@@ -12,19 +12,25 @@ public class ScrollableGrid : MonoBehaviour
     public GameObject stepTogglePrefab;    // Prefab for step toggles
     public int rows = 36;                  // Number of rows (pitches - 3 octaves)
     public int columns = 16;               // Number of steps
-    public float cellSize = 50f;           // Size of each cell (adjustable in Inspector)
-    public float cellSpacing = 5f;         // Spacing between cells (adjustable in Inspector)
-    public float pianoKeyWidth = 70f;      // Width of piano keys (adjustable in Inspector)
+    public float cellSize = 50f;           // Base size of each cell (adjusted by CanvasScaler)
+    public float cellSpacing = 5f;         // Spacing between cells (adjusted by CanvasScaler)
+    public float pianoKeyWidth = 70f;      // Base width of piano keys (adjusted by CanvasScaler)
     public string[] pitchNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
     private RectTransform pianoPanel;
     private RectTransform stepPanel;
     public Color blackKeyRowColor = Color.gray;  // Color for rows aligned with black keys
     public Color whiteKeyRowColor = Color.white; // Color for rows aligned with white keys
-    public SequencerController sequencerController;
+    public CanvasScaler canvasScaler;            // Reference to CanvasScaler for dynamic scaling
 
     void Start()
     {
+        // Ensure CanvasScaler is assigned
+        if (canvasScaler == null)
+        {
+            canvasScaler = FindObjectOfType<CanvasScaler>();
+        }
+
         // Disable the piano's vertical scrollbar visibility but keep functionality
         pianoScrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
         if (pianoScrollRect.verticalScrollbar != null)
@@ -50,7 +56,6 @@ public class ScrollableGrid : MonoBehaviour
         pianoPanel.anchorMax = new Vector2(0, 1);
         pianoPanel.pivot = new Vector2(0, 1); // Top-left pivot
         pianoPanel.anchoredPosition = Vector2.zero; // Align with top-left corner
-        pianoPanel.sizeDelta = new Vector2(pianoKeyWidth, cellSize * rows + (rows - 1) * cellSpacing);
 
         // Create the StepPanel (linked to scrollRectContent)
         stepPanel = new GameObject("StepPanel", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -59,9 +64,7 @@ public class ScrollableGrid : MonoBehaviour
         stepPanel.anchorMax = new Vector2(0, 1);
         stepPanel.pivot = new Vector2(0, 1); // Top-left pivot
         stepPanel.anchoredPosition = Vector2.zero; // Align with top-left corner
-        stepPanel.sizeDelta = new Vector2(cellSize * columns + (columns - 1) * cellSpacing, cellSize * rows + (rows - 1) * cellSpacing);
     }
-
 
     void PopulatePianoPanel()
     {
@@ -120,7 +123,6 @@ public class ScrollableGrid : MonoBehaviour
     }
 
 
-
     void PopulateStepPanel()
     {
         int startOctave = 1; // Starting octave for the lowest pitch (C1)
@@ -163,32 +165,20 @@ public class ScrollableGrid : MonoBehaviour
 
     void AdjustScrollRectContentSizes()
     {
-        // Calculate the actual grid dimensions
-        float stepContentWidth = (cellSize + cellSpacing) * columns - cellSpacing;
-        float stepContentHeight = (cellSize + cellSpacing) * rows - cellSpacing;
-
         // Set the ScrollRectContent size manually
-        scrollRectContent.sizeDelta = new Vector2(stepContentWidth, stepContentHeight);
-
-        // Ensure the StepPanel also matches the content size
-        stepPanel.sizeDelta = new Vector2(stepContentWidth, stepContentHeight);
+        scrollRectContent.sizeDelta = new Vector2(150, 1500);
 
         // Adjust PianoPanel to fit rows
-        float pianoContentHeight = (cellSize + cellSpacing) * rows - cellSpacing;
-        pianoScrollRectContent.sizeDelta = new Vector2(pianoKeyWidth, pianoContentHeight);
+        pianoScrollRectContent.sizeDelta = new Vector2(150, 1500);
 
         // Force Unity to recalculate the layout
         Canvas.ForceUpdateCanvases();
         UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRectContent);
 
-        // Adjust the width of ScrollRectContent manually after it's built
-        float manualWidthAdjustmentFactor = 0.35f; // Adjust this factor as needed (e.g., 0.8 for 80%)
-        float adjustedWidth = stepContentWidth * manualWidthAdjustmentFactor;
-        scrollRectContent.sizeDelta = new Vector2(adjustedWidth, stepContentHeight);
-
         // Debug output for verification
         Debug.Log($"ScrollRectContent (Adjusted): Width={scrollRectContent.sizeDelta.x}, Height={scrollRectContent.sizeDelta.y}");
     }
+
 
     private void OnStepScrollChanged(Vector2 scrollPosition)
     {
