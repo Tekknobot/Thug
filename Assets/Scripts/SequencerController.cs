@@ -2,7 +2,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using TMPro; // Import TextMeshPro namespace
+using TMPro;
+using System.IO; // Import TextMeshPro namespace
 
 public class SequencerController : MonoBehaviour
 {
@@ -27,21 +28,56 @@ public class SequencerController : MonoBehaviour
     private const string SCROLL_POSITION_KEY = "ScrollPosition";
     public TextMeshProUGUI bpmText; // Reference to TextMeshPro text for displaying BPM
 
+    private string saveFilePath;
+
+    private void Awake()
+    {
+        // Set the save file path
+        saveFilePath = Path.Combine(Application.persistentDataPath, "sequencerData.json");
+    }
+
     private void Start()
     {
-        StartCoroutine(WaitForGridInitialization());
+        StartCoroutine(InitializeAndLoadState());
+    }
 
-        // Initialize the BPM from the slider's value (if assigned)
+    private IEnumerator InitializeAndLoadState()
+    {
+        yield return StartCoroutine(WaitForGridInitialization()); // Wait for grid initialization
+        yield return StartCoroutine(LoadGridStateFromJson());     // Load saved state
+
+        // Sync the slider with the loaded BPM
         if (bpmSlider != null)
         {
-            bpm = bpmSlider.value;
+            bpmSlider.value = bpm;
             bpmSlider.onValueChanged.AddListener(UpdateBpm); // Listen for slider changes
         }
 
-        // Calculate step duration based on the initial BPM
-        UpdateStepDuration(); 
+        UpdateStepDuration();
+        UpdateBpmText();
+        Debug.Log("[SequencerController] Initialization and state loading complete.");
+    }
 
-        StartCoroutine(LoadGridStateFromJson());   
+    public void UpdateBpm(float newBpm)
+    {
+        bpm = newBpm;
+        UpdateStepDuration();
+        UpdateBpmText();
+        Debug.Log($"[SequencerController] BPM updated to {bpm}");
+    }
+
+    private void UpdateStepDuration()
+    {
+        stepDuration = 60f / (bpm * 4); // 4 steps per beat
+        Debug.Log($"[SequencerController] Step duration updated: {stepDuration:F3} seconds.");
+    }
+
+    private void UpdateBpmText()
+    {
+        if (bpmText != null)
+        {
+            bpmText.text = bpm.ToString("F0");
+        }
     }
 
     private IEnumerator WaitForGridInitialization()
@@ -84,7 +120,96 @@ public class SequencerController : MonoBehaviour
         SaveData();
     }
 
+    public void SaveData()
+    {
+        if (!isInitialized)
+        {
+            Debug.LogWarning("[SequencerController] Cannot save data: Sequencer is not initialized.");
+            return;
+        }
 
+        string gridState = ""; // Serialize the grid state
+        for (int row = 0; row < grid.rows; row++)
+        {
+            for (int col = 0; col < grid.columns; col++)
+            {
+                CustomToggle toggle = grid.GetToggleAt(row, col);
+                gridState += toggle != null && toggle.GetState() ? "1" : "0";
+            }
+        }
+
+        float scrollPosition = grid.stepScrollRect?.verticalScrollbar.value ?? 0f;
+
+        // Create the SequencerData object
+        SequencerData data = new SequencerData(bpm, gridState, scrollPosition);
+
+        // Save to file
+        string json = JsonUtility.ToJson(data, true);
+        File.WriteAllText(saveFilePath, json);
+        Debug.Log($"[SequencerController] Sequencer data saved to {saveFilePath}");
+    }
+
+    private IEnumerator LoadGridStateFromJson()
+    {
+        if (!File.Exists(saveFilePath))
+        {
+            Debug.LogWarning($"[SequencerController] Save file not found at path: {saveFilePath}. Loading default state.");
+            yield break;
+        }
+
+        string json = File.ReadAllText(saveFilePath);
+        SequencerData data = JsonUtility.FromJson<SequencerData>(json);
+
+        if (data == null)
+        {
+            Debug.LogError("[SequencerController] Failed to parse save file.");
+            yield break;
+        }
+
+        // Apply the loaded BPM
+        if (data.bpm > 0)
+        {
+            bpm = data.bpm;
+            Debug.Log($"[SequencerController] Loaded BPM: {bpm}");
+        }
+        else
+        {
+            Debug.LogWarning("[SequencerController] Invalid BPM loaded. Using default.");
+        }
+
+        // Apply grid state
+        if (!string.IsNullOrEmpty(data.gridState))
+        {
+            int index = 0;
+            for (int row = 0; row < grid.rows; row++)
+            {
+                for (int col = 0; col < grid.columns; col++)
+                {
+                    if (index < data.gridState.Length)
+                    {
+                        CustomToggle toggle = grid.GetToggleAt(row, col);
+                        if (toggle != null)
+                        {
+                            toggle.SetState(data.gridState[index] == '1');
+                        }
+                        index++;
+                    }
+                }
+            }
+            Debug.Log("[SequencerController] Grid state loaded.");
+        }
+        else
+        {
+            Debug.LogWarning("[SequencerController] Grid state is empty.");
+        }
+
+        // Apply scroll position
+        if (grid.stepScrollRect != null)
+        {
+            grid.stepScrollRect.verticalScrollbar.value = data.scrollPosition;
+            Debug.Log($"[SequencerController] Scroll position loaded: {data.scrollPosition}");
+        }
+    }
     public void Play()
     {
         if (!isInitialized)
@@ -237,57 +362,33 @@ public class SequencerController : MonoBehaviour
             }
         }
     }
-
-    public void UpdateStepDuration()
+    
+    public void LoadData()
     {
-        stepDuration = 60f / (bpm * 4);
-        Debug.Log($"Step duration updated to {stepDuration} seconds per step at {bpm} BPM.");
-    }
-
-    private void UpdateBpm(float newBpm)
-    {
-        bpm = newBpm;
-        UpdateStepDuration();
-        UpdateBpmText(); // Update the BPM text
-        Debug.Log($"BPM updated to {bpm}.");
-    }
-
-    private void UpdateBpmText()
-    {
-        if (bpmText != null)
-        {
-            bpmText.text = bpm.ToString("F0"); // Display BPM as a whole number
-        }
-    }
-
-
-    public IEnumerator LoadGridStateFromJson()
-    {
-        // Ensure grid initialization is complete
-        while (!isInitialized)
-        {
-            yield return null;
-        }
-
-        // Load data from JSON using SaveSystem
         SequencerData data = SaveSystem.Load();
 
         if (data == null)
         {
-            Debug.LogWarning("No saved data found. Loading default grid state.");
-            yield break; // Exit if no saved data exists
+            Debug.LogWarning("No saved data found. Loading default sequencer state.");
+            return;
         }
 
         // Apply the loaded BPM
-        bpm = data.bpm;
-        UpdateStepDuration(); // Update step duration based on loaded BPM
-
-        if (bpmSlider != null)
+        if (data.bpm > 0) // Ensure valid BPM
         {
-            bpmSlider.value = bpm; // Sync slider with the loaded BPM
+            bpm = data.bpm;
+            UpdateStepDuration();
+
+            if (bpmSlider != null)
+            {
+                bpmSlider.value = bpm; // Sync slider with the loaded BPM
+            }
+
+            UpdateBpmText(); // Update BPM text UI
+            Debug.Log($"Loaded BPM from save file: {bpm}");
         }
 
-        // Deserialize the grid state string
+        // Apply the loaded grid state
         if (!string.IsNullOrEmpty(data.gridState))
         {
             int index = 0;
@@ -300,13 +401,13 @@ public class SequencerController : MonoBehaviour
                         CustomToggle toggle = grid.GetToggleAt(row, col);
                         if (toggle != null)
                         {
-                            toggle.SetState(data.gridState[index] == '1'); // Set toggle state
+                            toggle.SetState(data.gridState[index] == '1'); // Restore toggle state
                         }
                         index++;
                     }
                 }
             }
-            Debug.Log("Grid state loaded from JSON.");
+            Debug.Log("Grid state loaded from save file.");
         }
         else
         {
@@ -321,81 +422,4 @@ public class SequencerController : MonoBehaviour
         }
     }
 
-
-    public void SaveSequencerState()
-    {
-        // Save grid state
-        string gridState = "";
-        for (int row = 0; row < grid.rows; row++)
-        {
-            for (int col = 0; col < grid.columns; col++)
-            {
-                CustomToggle toggle = grid.GetToggleAt(row, col);
-                gridState += toggle != null && toggle.GetState() ? "1" : "0";
-            }
-        }
-    }
-
-
-    public void SaveData()
-    {
-        // Gather the current state
-        string gridState = ""; // Serialize the grid state
-        for (int row = 0; row < grid.rows; row++)
-        {
-            for (int col = 0; col < grid.columns; col++)
-            {
-                CustomToggle toggle = grid.GetToggleAt(row, col);
-                gridState += toggle != null && toggle.GetState() ? "1" : "0";
-            }
-        }
-
-        float scrollPosition = grid.stepScrollRect?.verticalScrollbar.value ?? 0f;
-
-        // Create the data object
-        SequencerData data = new SequencerData(bpm, gridState, scrollPosition);
-
-        // Save the data
-        SaveSystem.Save(data);
-    }
-
-    public void LoadData()
-    {
-        SequencerData data = SaveSystem.Load();
-
-        // Apply the loaded data
-        bpm = data.bpm;
-        UpdateStepDuration();
-
-        if (bpmSlider != null)
-        {
-            bpmSlider.value = bpm; // Sync slider
-        }
-
-        // Deserialize grid state
-        int index = 0;
-        for (int row = 0; row < grid.rows; row++)
-        {
-            for (int col = 0; col < grid.columns; col++)
-            {
-                if (index < data.gridState.Length)
-                {
-                    CustomToggle toggle = grid.GetToggleAt(row, col);
-                    if (toggle != null)
-                    {
-                        toggle.SetState(data.gridState[index] == '1');
-                    }
-                    index++;
-                }
-            }
-        }
-
-        // Apply scroll position
-        if (grid.stepScrollRect != null)
-        {
-            grid.stepScrollRect.verticalScrollbar.value = data.scrollPosition;
-        }
-
-        Debug.Log("Sequencer data loaded and applied.");
-    }
 }
